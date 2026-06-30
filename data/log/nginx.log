@@ -1,0 +1,35 @@
+10.20.0.5 - - [25/Jun/2026:07:59:30 +0000] "GET /healthz HTTP/1.1" 200 2 "-" "kube-probe/1.28" rt=0.002 uct="0.000" urt="0.001" us=200
+10.20.0.5 - - [25/Jun/2026:08:29:30 +0000] "GET /healthz HTTP/1.1" 200 2 "-" "kube-probe/1.28" rt=0.002 uct="0.000" urt="0.001" us=200
+10.20.0.11 - - [25/Jun/2026:19:30:02 +0000] "POST /api/v1/results?runId=250625_NB551234_0142_AHKVJ7BGXM HTTP/1.1" 200 87 "-" "CGP-pipeline/2.5.0" rt=2.104 uct="0.001" urt="2.090" us=200
+10.20.0.11 - - [25/Jun/2026:19:30:09 +0000] "GET /api/v1/reports/status?runId=250625_NB551234_0142_AHKVJ7BGXM HTTP/1.1" 200 142 "-" "CGP-pipeline/2.5.0" rt=0.061 uct="0.001" urt="0.058" us=200
+10.20.5.42 - - [25/Jun/2026:20:15:11 +0000] "GET /report/view?reportId=RPT-44021 HTTP/1.1" 200 18540 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" rt=0.231 uct="0.002" urt="0.180" us=200
+10.20.0.5 - - [26/Jun/2026:03:59:30 +0000] "GET /healthz HTTP/1.1" 200 2 "-" "kube-probe/1.28" rt=0.002 uct="0.000" urt="0.001" us=200
+2026/06/26 04:00:16 [error] 2471#0: *10231 connect() failed (111: Connection refused) while connecting to upstream, client: 10.20.0.11, server: cgp-proxy.internal, request: "POST /api/v1/results?runId=250626_A00521_0205_BHF7LMDSXY HTTP/1.1", upstream: "http://10.20.0.30:8080/api/v1/results", host: "cgp-proxy.internal"
+10.20.0.11 - - [26/Jun/2026:04:00:16 +0000] "POST /api/v1/results?runId=250626_A00521_0205_BHF7LMDSXY HTTP/1.1" 502 552 "-" "CGP-pipeline/2.5.0" rt=0.003 uct="0.003" urt="-" us="-"
+2026/06/26 04:00:30 [error] 2471#0: *10240 connect() failed (111: Connection refused) while connecting to upstream, client: 10.20.0.5, server: cgp-proxy.internal, request: "GET /healthz HTTP/1.1", upstream: "http://10.20.0.30:8080/healthz", host: "cgp-proxy.internal"
+10.20.0.5 - - [26/Jun/2026:04:00:30 +0000] "GET /healthz HTTP/1.1" 502 552 "-" "kube-probe/1.28" rt=0.002 uct="0.002" urt="-" us="-"
+10.20.0.5 - - [26/Jun/2026:04:01:00 +0000] "GET /healthz HTTP/1.1" 502 552 "-" "kube-probe/1.28" rt=0.002 uct="0.002" urt="-" us="-"
+10.20.0.11 - - [26/Jun/2026:04:05:23 +0000] "POST /api/v1/results?runId=250626_A00521_0205_BHF7LMDSXY HTTP/1.1" 200 87 "-" "CGP-pipeline/2.5.0" rt=3.510 uct="0.002" urt="3.480" us=200
+10.20.0.11 - - [26/Jun/2026:04:05:29 +0000] "GET /api/v1/reports/status?runId=250626_A00521_0205_BHF7LMDSXY HTTP/1.1" 200 142 "-" "CGP-pipeline/2.5.0" rt=0.055 uct="0.001" urt="0.052" us=200
+10.20.5.71 - - [26/Jun/2026:09:42:55 +0000] "GET /report/view?reportId=RPT-44088 HTTP/1.1" 200 20133 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)" rt=0.288 uct="0.002" urt="0.210" us=200
+10.20.0.5 - - [27/Jun/2026:13:29:30 +0000] "GET /healthz HTTP/1.1" 200 2 "-" "kube-probe/1.28" rt=0.002 uct="0.000" urt="0.001" us=200
+10.20.0.11 - - [27/Jun/2026:13:30:02 +0000] "POST /api/v1/results?runId=250627_NB551234_0143_AHKW2BGXM HTTP/1.1" 502 552 "-" "CGP-pipeline/2.5.0" rt=0.004 uct="0.004" urt="-" us="-"
+2026/06/27 13:35:02 [error] 2471#0: *11894 upstream timed out (110: Connection timed out) while reading response header from upstream, client: 10.20.0.11, server: cgp-proxy.internal, request: "POST /api/v1/results?runId=250627_NB551234_0143_AHKW2BGXM HTTP/1.1", upstream: "http://10.20.0.30:8080/api/v1/results", host: "cgp-proxy.internal"
+10.20.0.11 - - [27/Jun/2026:13:35:02 +0000] "POST /api/v1/results?runId=250627_NB551234_0143_AHKW2BGXM HTTP/1.1" 504 167 "-" "CGP-pipeline/2.5.0" rt=60.001 uct="0.002" urt="60.000" us=504
+2026/06/27 13:40:02 [error] 2471#0: *11902 no live upstreams while connecting to upstream, client: 10.20.0.11, server: cgp-proxy.internal, request: "POST /api/v1/results?runId=250627_NB551234_0143_AHKW2BGXM HTTP/1.1", upstream: "http://reporting_backend/api/v1/results", host: "cgp-proxy.internal"
+10.20.0.11 - - [27/Jun/2026:13:40:02 +0000] "POST /api/v1/results?runId=250627_NB551234_0143_AHKW2BGXM HTTP/1.1" 503 198 "-" "CGP-pipeline/2.5.0" rt=0.002 uct="-" urt="-" us="-"
+10.20.0.5 - - [27/Jun/2026:13:41:00 +0000] "GET /healthz HTTP/1.1" 503 198 "-" "kube-probe/1.28" rt=0.002 uct="-" urt="-" us="-"
+2026/06/27 19:40:11 [notice] 1#0: signal 15 (SIGTERM) received from 1, exiting
+2026/06/27 19:40:11 [notice] 2471#0: gracefully shutting down
+2026/06/27 19:40:11 [notice] 1#0: signal 17 (SIGCHLD) received from 2471
+2026/06/27 19:50:03 [notice] 1#0: using the "epoll" event method
+2026/06/27 19:50:03 [notice] 1#0: nginx/1.24.0
+2026/06/27 19:50:03 [notice] 1#0: start worker processes
+10.20.0.11 - - [28/Jun/2026:08:00:08 +0000] "POST /api/v1/results?runId=250627_NB551234_0143_AHKW2BGXM HTTP/1.1" 200 87 "-" "CGP-pipeline/2.5.0" rt=1.902 uct="0.001" urt="1.880" us=200
+2026/06/28 08:00:12 [error] 3188#0: *12044 access forbidden by auth_request, client: 10.20.0.11, server: cgp-proxy.internal, request: "POST /api/v1/results?runId=250627_M02158_0312_000000000-LMQRS HTTP/1.1", subrequest: "/_auth", host: "cgp-proxy.internal"
+10.20.0.11 - - [28/Jun/2026:08:00:12 +0000] "POST /api/v1/results?runId=250627_M02158_0312_000000000-LMQRS HTTP/1.1" 401 179 "-" "CGP-pipeline/2.5.0" rt=0.006 uct="-" urt="-" us="-"
+10.20.0.5 - - [28/Jun/2026:08:30:00 +0000] "GET /healthz HTTP/1.1" 200 2 "-" "kube-probe/1.28" rt=0.002 uct="0.000" urt="0.001" us=200
+10.20.0.11 - - [28/Jun/2026:14:05:02 +0000] "POST /api/v1/results?runId=250628_A00521_0206_BHFA1DSXY HTTP/1.1" 404 153 "-" "CGP-pipeline/2.5.0" rt=0.001 uct="-" urt="-" us="-"
+10.20.0.11 - - [28/Jun/2026:14:40:22 +0000] "POST /api/v1/results?runId=250628_A00521_0206_BHFA1DSXY HTTP/1.1" 200 87 "-" "CGP-pipeline/2.5.0" rt=2.640 uct="0.002" urt="2.610" us=200
+10.20.0.11 - - [28/Jun/2026:14:40:28 +0000] "GET /api/v1/reports/status?runId=250628_A00521_0206_BHFA1DSXY HTTP/1.1" 200 142 "-" "CGP-pipeline/2.5.0" rt=0.058 uct="0.001" urt="0.055" us=200
+10.20.5.42 - - [28/Jun/2026:15:05:47 +0000] "GET /report/view?reportId=RPT-44152 HTTP/1.1" 200 19877 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" rt=0.244 uct="0.002" urt="0.190" us=200

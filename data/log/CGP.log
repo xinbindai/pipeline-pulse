@@ -1,0 +1,133 @@
+2026-06-25 08:00:01 INFO  [CGP] DRAGEN TruSight Oncology 500 (CGP) Analysis Software v2.5.0 starting up
+2026-06-25 08:00:02 INFO  [CGP] Loaded panel manifest TSO500: 523-gene DNA panel, 55-gene RNA fusion panel
+2026-06-25 08:00:03 INFO  [CGP] DRAGEN FPGA hardware acceleration enabled, 2 boards online
+2026-06-25 08:00:04 INFO  [Watcher] Polling NFS run root /mnt/seq/runs for completed sequencing runs
+2026-06-25 08:00:06 INFO  [Watcher] copyComplete.txt detected for run 250625_NB551234_0142_AHKVJ7BGXM
+2026-06-25 08:00:07 INFO  [CGP] Launching CGP analysis task for run 250625_NB551234_0142_AHKVJ7BGXM (24 DNA + 8 RNA FFPE libraries)
+2026-06-25 08:00:10 INFO  [RunQC] InterOp metrics within spec: %>=Q30 91.3, cluster PF 84.2%, error rate 0.41%
+2026-06-25 08:00:42 INFO  [DNA-QC] FFPE input QC: delta Cq median 3.2 across DNA libraries, within <=5 spec
+2026-06-25 08:01:05 INFO  [RNA-QC] RNA input QC: median DV200 56% across 8 RNA libraries, within >=20% spec
+2026-06-25 08:01:30 INFO  [FASTQ] DRAGEN BCL Convert started, SampleSheet lists 32 libraries with UMI adapters
+2026-06-25 08:13:40 INFO  [FASTQ] Demultiplexing completed, 1.42 billion reads generated, undetermined 4.1%
+2026-06-25 08:14:05 INFO  [DNA-Align] DRAGEN alignment to GRCh38 started for sample CGP-0001
+2026-06-25 08:28:51 INFO  [DNA-Align] Alignment complete for CGP-0001, mapping rate 99.2%, mean raw depth 1124x
+2026-06-25 08:31:22 INFO  [UMI] UMI collapsing complete for CGP-0001, mean family size 4.2, consensus depth 615x
+2026-06-25 08:45:50 INFO  [SmallVar] Small variant calling complete for CGP-0001, 312 candidate variants in 523-gene panel
+2026-06-25 08:49:14 INFO  [Phased] Phased variant calling complete for CGP-0001, 3 phased MNVs in EGFR
+2026-06-25 08:52:18 INFO  [CNV] Copy number calling complete for CGP-0001, 2 amplifications (ERBB2, MET) detected
+2026-06-25 08:58:44 INFO  [MSI] MSI complete for CGP-0001: 41/130 sites usable, 8.2% unstable -> MSI-Stable
+2026-06-25 09:03:11 INFO  [TMB] TMB complete for CGP-0001: 9.6 mutations/Mb, eligible region 1.31 Mb
+2026-06-25 09:06:38 INFO  [HRD] HRD scoring complete for CGP-0001: genomic instability score 28 -> HRD-negative
+2026-06-25 09:12:05 INFO  [DNA-Align] DRAGEN alignment started for sample CGP-0002
+2026-06-25 09:40:55 INFO  [SmallVar] Small variant calling complete for CGP-0002, 298 candidate variants
+2026-06-25 10:15:44 WARN  [DNA-QC] Sample CGP-0007 median exon coverage 412x below 500x guideline (delta Cq 5.4)
+2026-06-25 10:22:35 INFO  [RNA-Align] DRAGEN RNA alignment started for sample CGP-0001-RNA (DV200 58%)
+2026-06-25 10:40:19 INFO  [Fusion] Fusion calling complete for CGP-0001-RNA, 1 fusion (EML4-ALK) detected
+2026-06-25 10:46:50 INFO  [Splice] Splice variant calling complete for CGP-0001-RNA, MET exon14 skipping detected
+2026-06-25 11:02:18 ERROR [DNA-Align] DRAGEN alignment failed for run 250625_NB551234_0142_AHKVJ7BGXM sample CGP-0013: insufficient disk space on /scratch (0 bytes free)
+2026-06-25 11:02:19 ERROR [CGP] Run 250625_NB551234_0142_AHKVJ7BGXM halted, fatal error in DNA alignment stage
+2026-06-25 11:10:33 WARN  [CGP] /scratch utilization 98%, purging intermediate DRAGEN map/sort files
+2026-06-25 11:45:32 INFO  [CGP] /scratch space reclaimed, retrying failed stages for run 250625_NB551234_0142_AHKVJ7BGXM
+2026-06-25 11:45:36 INFO  [DNA-Align] Resuming DRAGEN alignment for CGP-0013
+2026-06-25 12:18:07 INFO  [UMI] UMI collapsing complete for CGP-0013, consensus depth 588x
+2026-06-25 13:02:40 INFO  [Annot] Nirvana annotation started for run 250625_NB551234_0142_AHKVJ7BGXM combined variant set
+2026-06-25 14:30:05 INFO  [CNV] Copy number calling complete for batch, 6 libraries with focal amplifications
+2026-06-25 15:48:22 INFO  [MSI] MSI complete for batch, all remaining DNA libraries MSI-Stable
+2026-06-25 17:12:08 ERROR [Annot] Nirvana annotation crashed for run 250625_NB551234_0142_AHKVJ7BGXM sample CGP-0019: java.lang.OutOfMemoryError - Java heap space exceeded at 16GB
+2026-06-25 17:12:09 ERROR [CGP] Stage annotation failed for run 250625_NB551234_0142_AHKVJ7BGXM, sample CGP-0019 quarantined for manual review
+2026-06-25 18:00:14 INFO  [CGP] Increasing JVM heap allocation to 32GB and requeueing CGP-0019
+2026-06-25 18:45:27 INFO  [Annot] Nirvana annotation completed for CGP-0019 on retry, 287 variants annotated
+2026-06-25 19:05:33 INFO  [Contam] Contamination check passed for run 250625_NB551234_0142_AHKVJ7BGXM, max score 0.03 (p=0.41)
+2026-06-25 19:20:48 INFO  [Metrics] Combined variant output and metrics written to /mnt/results/250625_NB551234_0142_AHKVJ7BGXM
+2026-06-25 19:30:00 INFO  [CGP] Analysis task completed for run 250625_NB551234_0142_AHKVJ7BGXM, 23/24 DNA + 8/8 RNA libraries successful
+2026-06-25 19:30:02 INFO  [Report] Posting analysis result to reporting tool via nginx: POST https://cgp-proxy.internal/api/v1/results?runId=250625_NB551234_0142_AHKVJ7BGXM
+2026-06-25 19:30:04 INFO  [Report] Reporting tool acknowledged result for run 250625_NB551234_0142_AHKVJ7BGXM: HTTP 200, reportId=RPT-44021
+2026-06-25 19:30:05 INFO  [CGP] Archiving run 250625_NB551234_0142_AHKVJ7BGXM to cold storage, task closed (runtime 11h30m)
+2026-06-25 12:30:01 INFO  [Watcher] copyComplete.txt detected for run 250625_M02158_0311_000000000-KLXYZ
+2026-06-25 12:30:03 INFO  [CGP] Launching CGP analysis task for run 250625_M02158_0311_000000000-KLXYZ
+2026-06-25 12:30:05 ERROR [FASTQ] DRAGEN BCL Convert failed for run 250625_M02158_0311_000000000-KLXYZ: RunInfo.xml not found, run folder may be incomplete
+2026-06-25 12:30:06 ERROR [CGP] Aborting analysis task for run 250625_M02158_0311_000000000-KLXYZ, missing required run metadata
+2026-06-25 12:31:20 WARN  [Watcher] copyComplete.txt present but RunInfo.xml/RTAComplete.txt absent on NFS for run 250625_M02158_0311_000000000-KLXYZ
+2026-06-25 12:45:19 INFO  [CGP] Notified lab operator to re-stage run 250625_M02158_0311_000000000-KLXYZ on NFS share
+2026-06-26 07:30:02 INFO  [CGP] DRAGEN TruSight Oncology 500 (CGP) Analysis Software v2.5.0 starting up
+2026-06-26 07:30:05 INFO  [Watcher] copyComplete.txt detected for run 250626_A00521_0205_BHF7LMDSXY
+2026-06-26 07:30:07 INFO  [CGP] Launching CGP analysis task for run 250626_A00521_0205_BHF7LMDSXY (88 DNA + 8 RNA FFPE libraries)
+2026-06-26 07:30:11 INFO  [RunQC] InterOp metrics within spec: %>=Q30 90.1, cluster PF 82.7%, error rate 0.46%
+2026-06-26 07:31:40 INFO  [DNA-QC] FFPE input QC: delta Cq median 3.8 across DNA libraries, within <=5 spec
+2026-06-26 07:32:14 INFO  [FASTQ] DRAGEN BCL Convert started, SampleSheet lists 96 libraries with UMI adapters
+2026-06-26 07:55:48 INFO  [FASTQ] Demultiplexing completed, 4.10 billion reads generated
+2026-06-26 07:55:52 WARN  [FASTQ] Undetermined reads 9.8% above 8% guideline, check index balance
+2026-06-26 08:10:11 INFO  [DNA-Align] DRAGEN parallel alignment to GRCh38 started for 88 DNA libraries
+2026-06-26 09:05:22 ERROR [DNA-QC] Sample CGP-0042 from run 250626_A00521_0205_BHF7LMDSXY failed QC: GC content 68% indicates possible bacterial contamination
+2026-06-26 09:05:23 WARN  [CGP] Sample CGP-0042 flagged and excluded; run 250626_A00521_0205_BHF7LMDSXY continues with remaining libraries
+2026-06-26 13:20:41 ERROR [DNA-Align] Reference index corrupted for run 250626_A00521_0205_BHF7LMDSXY: GRCh38 .bwt file checksum mismatch, halting alignment jobs
+2026-06-26 13:20:42 ERROR [CGP] Run 250626_A00521_0205_BHF7LMDSXY paused, reference genome integrity check failed
+2026-06-26 13:45:10 INFO  [CGP] Re-staging GRCh38 DRAGEN reference index from internal mirror
+2026-06-26 14:30:27 INFO  [CGP] Reference index restored and checksum verified for run 250626_A00521_0205_BHF7LMDSXY
+2026-06-26 14:30:30 INFO  [DNA-Align] Resuming DRAGEN parallel alignment for run 250626_A00521_0205_BHF7LMDSXY
+2026-06-26 17:55:18 INFO  [DNA-Align] Batch alignment complete, mean mapping rate 98.7%
+2026-06-26 18:05:44 INFO  [UMI] UMI collapsing complete for batch, mean consensus depth 540x
+2026-06-26 18:40:02 INFO  [SmallVar] Small variant calling complete for 87 DNA libraries
+2026-06-26 19:00:12 INFO  [Phased] Phased variant calling complete for batch, 11 phased MNVs across libraries
+2026-06-26 19:25:33 INFO  [CNV] Copy number calling complete, 14 libraries with focal amplifications
+2026-06-26 19:40:02 INFO  [MSI] MSI complete for batch, 3 libraries MSI-High
+2026-06-26 20:15:33 INFO  [TMB] TMB calculation complete for 87 DNA libraries, median 7.4 mutations/Mb
+2026-06-26 21:05:18 INFO  [HRD] HRD scoring complete for batch, 3 libraries HRD-positive
+2026-06-26 23:50:19 ERROR [Variant] Node compute-07 lost during run 250626_A00521_0205_BHF7LMDSXY: 4 sample jobs killed, scheduler will requeue
+2026-06-26 23:50:20 WARN  [CGP] Cluster node compute-07 unreachable, redistributing jobs for run 250626_A00521_0205_BHF7LMDSXY
+2026-06-27 01:15:48 INFO  [Variant] Requeued jobs completed on healthy nodes
+2026-06-27 01:40:09 INFO  [RNA-Align] DRAGEN RNA alignment complete for 8 RNA libraries (median DV200 44%)
+2026-06-27 02:05:30 INFO  [Fusion] Fusion calling complete, 5 fusions across RNA libraries (incl. NTRK1, RET)
+2026-06-27 02:18:55 INFO  [Splice] Splice variant calling complete, 2 MET exon14 skipping events
+2026-06-27 02:30:11 INFO  [Annot] Nirvana annotation completed for run 250626_A00521_0205_BHF7LMDSXY
+2026-06-27 03:10:40 INFO  [Contam] Contamination check passed for 86 libraries, 1 borderline (CGP-0071 score 0.11)
+2026-06-27 03:45:55 INFO  [Metrics] Combined variant output and metrics written for run 250626_A00521_0205_BHF7LMDSXY
+2026-06-27 04:00:14 INFO  [CGP] Analysis task completed for run 250626_A00521_0205_BHF7LMDSXY, 86/88 DNA + 8/8 RNA libraries successful
+2026-06-27 04:00:16 INFO  [Report] Posting analysis result to reporting tool via nginx: POST https://cgp-proxy.internal/api/v1/results?runId=250626_A00521_0205_BHF7LMDSXY
+2026-06-27 04:00:21 WARN  [Report] Reporting tool call returned HTTP 502 via nginx for run 250626_A00521_0205_BHF7LMDSXY, upstream not ready
+2026-06-27 04:05:21 INFO  [Report] Retrying result post to reporting tool for run 250626_A00521_0205_BHF7LMDSXY (attempt 2/3)
+2026-06-27 04:05:24 INFO  [Report] Reporting tool acknowledged result for run 250626_A00521_0205_BHF7LMDSXY: HTTP 200, reportId=RPT-44088
+2026-06-27 04:10:33 INFO  [CGP] Archiving run 250626_A00521_0205_BHF7LMDSXY to cold storage, task closed (runtime 20h40m)
+2026-06-27 09:15:02 INFO  [Watcher] copyComplete.txt detected for run 250627_NB551234_0143_AHKW2BGXM
+2026-06-27 09:15:04 INFO  [CGP] Launching CGP analysis task for run 250627_NB551234_0143_AHKW2BGXM (16 DNA libraries)
+2026-06-27 09:15:08 INFO  [RunQC] InterOp metrics within spec: %>=Q30 92.0, cluster PF 85.6%
+2026-06-27 09:16:30 INFO  [FASTQ] DRAGEN BCL Convert started, SampleSheet lists 16 libraries with UMI adapters
+2026-06-27 09:28:55 INFO  [FASTQ] Demultiplexing completed, 0.92 billion reads generated
+2026-06-27 12:40:18 INFO  [SmallVar] Small variant calling complete for all 16 DNA libraries
+2026-06-27 13:05:44 INFO  [Annot] Nirvana annotation completed for run 250627_NB551234_0143_AHKW2BGXM
+2026-06-27 13:20:10 INFO  [Metrics] Combined variant output and metrics written for run 250627_NB551234_0143_AHKW2BGXM
+2026-06-27 13:30:00 INFO  [CGP] Analysis task completed for run 250627_NB551234_0143_AHKW2BGXM, 16/16 DNA libraries successful
+2026-06-27 13:30:02 INFO  [Report] Posting analysis result to reporting tool via nginx: POST https://cgp-proxy.internal/api/v1/results?runId=250627_NB551234_0143_AHKW2BGXM
+2026-06-27 13:30:07 WARN  [Report] Reporting tool call returned HTTP 502 via nginx for run 250627_NB551234_0143_AHKW2BGXM, upstream not ready (attempt 1/3)
+2026-06-27 13:35:07 WARN  [Report] Reporting tool call returned HTTP 504 via nginx for run 250627_NB551234_0143_AHKW2BGXM, gateway timeout (attempt 2/3)
+2026-06-27 13:40:07 ERROR [Report] Reporting tool call returned HTTP 503 via nginx for run 250627_NB551234_0143_AHKW2BGXM, service unavailable (attempt 3/3), result NOT delivered
+2026-06-27 13:40:08 ERROR [CGP] Run 250627_NB551234_0143_AHKW2BGXM analysis succeeded but result delivery failed after 3 attempts; task state set to PENDING_REPORT, manual resend required
+2026-06-27 13:40:09 WARN  [Report] Queued result for run 250627_NB551234_0143_AHKW2BGXM in outbound retry queue for automatic redelivery
+2026-06-27 16:02:11 INFO  [Watcher] copyComplete.txt detected for run 250627_M02158_0312_000000000-LMQRS
+2026-06-27 16:02:13 INFO  [CGP] Launching CGP analysis task for run 250627_M02158_0312_000000000-LMQRS (8 DNA libraries)
+2026-06-27 16:02:14 ERROR [Watcher] NFS mount /mnt/seq/runs went stale during read of run 250627_M02158_0312_000000000-LMQRS: Stale file handle
+2026-06-27 16:02:15 ERROR [CGP] Aborting analysis task for run 250627_M02158_0312_000000000-LMQRS, run directory not readable on NFS share
+2026-06-27 16:10:40 INFO  [Watcher] NFS mount /mnt/seq/runs remounted and healthy, rescheduling pending runs
+2026-06-27 16:11:05 INFO  [CGP] Re-launching CGP analysis task for run 250627_M02158_0312_000000000-LMQRS
+2026-06-27 19:45:00 INFO  [CGP] Analysis task completed for run 250627_M02158_0312_000000000-LMQRS, 8/8 DNA libraries successful
+2026-06-27 19:45:02 ERROR [Report] Failed to connect to nginx proxy cgp-proxy.internal:443 for run 250627_M02158_0312_000000000-LMQRS: connection refused, no response logged at proxy
+2026-06-27 19:45:03 ERROR [CGP] Outbound result delivery aborted for run 250627_M02158_0312_000000000-LMQRS, proxy unreachable; verify nginx service and endpoint config
+2026-06-27 19:45:04 WARN  [Report] Queued result for run 250627_M02158_0312_000000000-LMQRS in outbound retry queue for automatic redelivery
+2026-06-28 08:00:01 INFO  [CGP] DRAGEN TruSight Oncology 500 (CGP) Analysis Software v2.5.0 starting up
+2026-06-28 08:00:05 INFO  [Report] Resuming outbound retry queue, 2 result(s) pending redelivery
+2026-06-28 08:00:08 INFO  [Report] Reporting tool acknowledged result for run 250627_NB551234_0143_AHKW2BGXM: HTTP 200, reportId=RPT-44131
+2026-06-28 08:00:09 INFO  [CGP] Run 250627_NB551234_0143_AHKW2BGXM result delivered on redelivery, task state cleared to CLOSED
+2026-06-28 08:00:12 ERROR [Report] Result post rejected by nginx for run 250627_M02158_0312_000000000-LMQRS: HTTP 401 Unauthorized, service token expired
+2026-06-28 08:00:13 ERROR [CGP] Outbound result delivery failed for run 250627_M02158_0312_000000000-LMQRS, authentication rejected at proxy; rotate CGP service token
+2026-06-28 09:10:30 INFO  [Watcher] copyComplete.txt detected for run 250628_A00521_0206_BHFA1DSXY
+2026-06-28 09:10:33 INFO  [CGP] Launching CGP analysis task for run 250628_A00521_0206_BHFA1DSXY (48 DNA + 8 RNA FFPE libraries)
+2026-06-28 09:11:02 INFO  [FASTQ] DRAGEN BCL Convert started, SampleSheet lists 56 libraries with UMI adapters
+2026-06-28 13:55:40 INFO  [Metrics] Combined variant output and metrics written for run 250628_A00521_0206_BHFA1DSXY
+2026-06-28 14:05:00 INFO  [CGP] Analysis task completed for run 250628_A00521_0206_BHFA1DSXY, 48/48 DNA + 8/8 RNA libraries successful
+2026-06-28 14:05:02 INFO  [Report] Posting analysis result to reporting tool via nginx: POST https://cgp-proxy.internal/api/v1/results?runId=250628_A00521_0206_BHFA1DSXY
+2026-06-28 14:05:04 ERROR [Report] Result post failed for run 250628_A00521_0206_BHFA1DSXY: HTTP 404 Not Found via nginx, endpoint /api/v1/results not routed to reporting tool upstream
+2026-06-28 14:05:05 ERROR [CGP] Outbound result delivery failed for run 250628_A00521_0206_BHFA1DSXY, endpoint not found at proxy; verify nginx location routing and reporting tool URL
+2026-06-28 14:05:06 WARN  [Report] Queued result for run 250628_A00521_0206_BHFA1DSXY in outbound retry queue for automatic redelivery
+2026-06-28 14:40:18 INFO  [CGP] nginx location routing corrected by operator, retrying queued result for run 250628_A00521_0206_BHFA1DSXY
+2026-06-28 14:40:22 INFO  [Report] Reporting tool acknowledged result for run 250628_A00521_0206_BHFA1DSXY: HTTP 200, reportId=RPT-44152
+2026-06-28 14:40:23 INFO  [CGP] Run 250628_A00521_0206_BHFA1DSXY result delivered, task state cleared to CLOSED
