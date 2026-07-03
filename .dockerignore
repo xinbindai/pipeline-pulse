@@ -1,0 +1,9 @@
+# Build context is the repository root; keep the Cloud Build upload / image lean.
+.git/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*:Zone.Identifier
+**/.venv/
+**/venv/
+node_modules/
