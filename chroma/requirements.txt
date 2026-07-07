@@ -1,0 +1,4 @@
+# Chroma server. Pinned for reproducibility — keep this EXACTLY in sync with
+# chroma/requirements-ingest.txt and mcp-server (chromadb) to avoid client/server
+# API drift. Bump deliberately after validating locally.
+chromadb==0.6.3

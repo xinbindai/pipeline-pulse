@@ -1,0 +1,9 @@
+# Keep the server image lean; these are not needed at runtime.
+.chroma-data/
+__pycache__/
+*.pyc
+*:Zone.Identifier
+ingest.py
+requirements-ingest.txt
+docker-compose.yml
+README.md

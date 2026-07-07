@@ -1,3 +1,5 @@
 fastmcp>=2.3.0
 uvicorn[standard]>=0.30.0
 yfinance>=0.2.40
+# rag_search tool → Chroma client. Keep in sync with chroma/requirements*.txt.
+chromadb==0.6.3

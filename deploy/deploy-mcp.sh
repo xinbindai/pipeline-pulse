@@ -3,8 +3,8 @@
 # Build the CGP demo MCP server image (repo-root context, single data/ copy)
 # and deploy it to Google Cloud Run.
 #
-# Usage (from the repository root):
-#   ./deploy.sh
+# Usage (from anywhere in the repository):
+#   ./deploy/deploy-mcp.sh
 #
 # Configuration is via environment variables (all have sensible defaults except
 # PROJECT_ID, which falls back to your active gcloud config):
@@ -17,8 +17,9 @@
 #
 set -euo pipefail
 
-# Always operate from the repository root (the build context).
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Always operate from the repository root (the build context). This script lives
+# in deploy/, so the repo root is its parent directory.
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
 # ── Configuration ───────────────────────────────────────────────────────────────
