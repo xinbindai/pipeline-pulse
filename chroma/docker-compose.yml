@@ -1,0 +1,28 @@
+# Local test harness for the Chroma server.
+#
+#   docker compose -f chroma/docker-compose.yml up --build
+#
+# Server is reachable at http://localhost:8001
+# Data persists to ./chroma/.chroma-data on the host.
+services:
+  chroma:
+    build: .
+    ports:
+      # Host 8001 -> container 8000. Host 8000 is avoided because a Chainlit app
+      # commonly runs there; publishing on 8001 prevents the clash.
+      - "8001:8000"
+    environment:
+      PORT: "8000"
+      PERSIST_DIRECTORY: /data
+      ANONYMIZED_TELEMETRY: "FALSE"
+      # Uncomment to require a token (clients must send Authorization: Bearer <token>):
+      # CHROMA_SERVER_AUTHN_PROVIDER: chromadb.auth.token_authn.TokenAuthenticationServerProvider
+      # CHROMA_SERVER_AUTHN_CREDENTIALS: "local-dev-token"
+    volumes:
+      - ./.chroma-data:/data
+    healthcheck:
+      # Version-agnostic: use the client library rather than a hardcoded API path.
+      test: ["CMD", "python", "-c", "import chromadb; chromadb.HttpClient(host='localhost', port=8000).heartbeat()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

@@ -1,0 +1,8 @@
+# Ingest/query client. Keep chromadb EXACTLY in sync with chroma/requirements.txt.
+chromadb==0.6.3
+
+# Needed only for ingest.py --chunk-method recursive (RecursiveCharacterTextSplitter).
+langchain-text-splitters>=0.2
+
+# Optional: only needed when running with --embedding openai
+# openai>=1.0

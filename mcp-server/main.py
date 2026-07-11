@@ -1,8 +1,9 @@
 """
 FastMCP Demo Server
-- Resource : stock://{ticker}/{date}                  → Yahoo Finance closing price
 - Resource : servicenow://incidents                   → list all ServiceNow incidents
+- Tool     : get_stock_price(ticker, date)            → Yahoo Finance closing price
 - Tool     : servicenow(field, query)                 → search incidents by a field
+- Tool     : rag_search(query, collection, n)         → retrieve chunks from Chroma
 - Tool     : calculate(a, op, b)                       → performs basic arithmetic
 Runs as a Streamable HTTP server (stateless, works on Cloud Run).
 """
@@ -22,13 +23,13 @@ mcp = FastMCP(
 )
 
 
-# ── Resource: stock price via Yahoo Finance ─────────────────────────────────────
-@mcp.resource("stock://{ticker}/{date}")
+# ── Tool: stock price via Yahoo Finance ─────────────────────────────────────────
+@mcp.tool()
 def get_stock_price(ticker: str, date: str) -> str:
     """
     Return the closing stock price for a ticker on a given date.
 
-    URI: stock://{ticker}/{date}
+    Args:
         ticker: Stock symbol, e.g. AAPL.
         date:   'YYYY-MM-DD', or 'today' for the latest trading day.
 
@@ -162,6 +163,88 @@ def search_incidents(field: str, query: str) -> str:
 
     return json.dumps(
         {"field": field, "query": query, "count": len(matches), "incidents": matches},
+        indent=2,
+    )
+
+
+# ── Tool: RAG search over a Chroma server ────────────────────────────────────────
+# Configured via environment (so it works against a local or Cloud Run Chroma):
+#   CHROMA_HOST        Chroma host (required to use this tool)
+#   CHROMA_PORT        Port (default: 443 when CHROMA_SSL=true, else 8000)
+#   CHROMA_SSL         'true' for HTTPS (Cloud Run) — default false
+#   CHROMA_TOKEN       Optional auth token (sent as Authorization: Bearer <token>)
+#   CHROMA_COLLECTION  Default collection name (default: rag_docs)
+#   CHROMA_EMBEDDING   'default' (built-in MiniLM) or 'openai' — must match ingest
+_chroma_collection_cache: dict = {}
+
+
+def _get_chroma_collection(collection: str):
+    """Return a cached Chroma collection handle for the given name."""
+    if collection in _chroma_collection_cache:
+        return _chroma_collection_cache[collection]
+
+    # Imported lazily so the rest of the server runs even without chromadb installed.
+    import chromadb
+    from chromadb.utils import embedding_functions
+
+    host = os.environ.get("CHROMA_HOST")
+    if not host:
+        raise ValueError(
+            "rag_search is not configured: set CHROMA_HOST (and CHROMA_PORT/"
+            "CHROMA_SSL/CHROMA_TOKEN as needed)."
+        )
+    ssl = os.environ.get("CHROMA_SSL", "false").lower() in ("1", "true", "yes")
+    port = int(os.environ.get("CHROMA_PORT", "443" if ssl else "8000"))
+    token = os.environ.get("CHROMA_TOKEN")
+    headers = {"Authorization": f"Bearer {token}"} if token else None
+
+    if os.environ.get("CHROMA_EMBEDDING", "default").lower() == "openai":
+        ef = embedding_functions.OpenAIEmbeddingFunction(
+            api_key=os.environ["OPENAI_API_KEY"],
+            model_name=os.environ.get("CHROMA_EMBEDDING_MODEL", "text-embedding-3-small"),
+        )
+    else:
+        ef = embedding_functions.DefaultEmbeddingFunction()
+
+    client = chromadb.HttpClient(host=host, port=port, ssl=ssl, headers=headers)
+    handle = client.get_collection(collection, embedding_function=ef)
+    _chroma_collection_cache[collection] = handle
+    return handle
+
+
+@mcp.tool()
+def rag_search(query: str, collection: str | None = None, n_results: int = 5) -> str:
+    """
+    Retrieve the most relevant document chunks for a query from the Chroma
+    vector database (RAG retrieval). Chunks are ingested by chroma/ingest.py.
+
+    Args:
+        query:       Natural-language search text.
+        collection:  Collection to search (default: $CHROMA_COLLECTION or 'rag_docs').
+        n_results:   Number of chunks to return (default: 5).
+
+    Returns a JSON object with the matches, each including the chunk text, its
+    source metadata, and the similarity distance (lower = closer).
+    """
+    name = collection or os.environ.get("CHROMA_COLLECTION", "rag_docs")
+    handle = _get_chroma_collection(name)
+
+    res = handle.query(
+        query_texts=[query],
+        n_results=n_results,
+        include=["documents", "metadatas", "distances"],
+    )
+    docs = res.get("documents", [[]])[0]
+    metas = res.get("metadatas", [[]])[0]
+    dists = res.get("distances", [[]])[0]
+    ids = res.get("ids", [[]])[0]
+
+    matches = [
+        {"id": i, "document": d, "metadata": m, "distance": dist}
+        for i, d, m, dist in zip(ids, docs, metas, dists)
+    ]
+    return json.dumps(
+        {"query": query, "collection": name, "count": len(matches), "matches": matches},
         indent=2,
     )
 
