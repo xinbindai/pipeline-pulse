@@ -11,3 +11,6 @@ chroma.log
 
 # Windows "mark of the web" sidecar files
 *:Zone.Identifier
+
+# Local scratch / test notes
+test_*
