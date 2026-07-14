@@ -3,15 +3,25 @@ FastMCP Demo Server
 - Resource : servicenow://incidents                   → list all ServiceNow incidents
 - Tool     : get_stock_price(ticker, date)            → Yahoo Finance closing price
 - Tool     : servicenow(field, query)                 → search incidents by a field
+- Tool     : cgp_log_search(run_id, sample_id, ...)   → search the CGP pipeline log
+- Tool     : nginx_log_search(run_id, status, ...)    → search the nginx proxy log
 - Tool     : rag_search(query, collection, n)         → retrieve chunks from Chroma
 - Tool     : calculate(a, op, b)                       → performs basic arithmetic
+
+The ServiceNow incidents and the CGP/nginx logs are loaded from a Google Cloud
+Storage bucket when GCS_BUCKET is set (Cloud Run uses its service account; local
+development uses Application Default Credentials). They fall back to the bundled
+data/ files when GCS is not configured. Use gcs_upload.py to populate the bucket.
+
 Runs as a Streamable HTTP server (stateless, works on Cloud Run).
 """
 
 import csv
 import datetime as dt
+import io
 import json
 import os
+import re
 from pathlib import Path
 
 import yfinance as yf
@@ -21,6 +31,40 @@ mcp = FastMCP(
     name="demo-server",
     instructions="A simple demo MCP server running on Google Cloud Run.",
 )
+
+
+# ── Data source: Google Cloud Storage (with local fallback) ──────────────────────
+# When GCS_BUCKET is set, the ServiceNow incidents CSV and the CGP/nginx logs are
+# read from that bucket via Application Default Credentials — the Cloud Run service
+# account in production, or `gcloud auth application-default login` locally. Object
+# paths default to the repo's data/ layout and are overridable via env.
+GCS_BUCKET = os.environ.get("GCS_BUCKET")
+SERVICENOW_OBJECT = os.environ.get("SERVICENOW_OBJECT", "servicenow/incidents.csv")
+CGP_LOG_OBJECT = os.environ.get("CGP_LOG_OBJECT", "log/CGP.log")
+NGINX_LOG_OBJECT = os.environ.get("NGINX_LOG_OBJECT", "log/nginx.log")
+
+
+def _gcs_download_text(object_path: str) -> str | None:
+    """Download a GCS object as text via ADC, or None when GCS is not configured."""
+    if not GCS_BUCKET:
+        return None
+    from google.cloud import storage  # lazy import; only needed when GCS is used
+
+    client = storage.Client()  # Application Default Credentials
+    blob = client.bucket(GCS_BUCKET).blob(object_path)
+    return blob.download_as_text()
+
+
+def _read_data_text(object_path: str, *local_relparts: str) -> str:
+    """
+    Return the text of a data file, preferring GCS (when GCS_BUCKET is set) and
+    falling back to the bundled local file under data/ for dev/tests.
+    """
+    text = _gcs_download_text(object_path)
+    if text is not None:
+        return text
+    path = _resolve_data_file(*local_relparts)
+    return Path(path).read_text(encoding="utf-8", errors="replace")
 
 
 # ── Tool: stock price via Yahoo Finance ─────────────────────────────────────────
@@ -75,41 +119,18 @@ SN_FIELDS = (
 )
 
 
-def _resolve_incidents_csv() -> Path:
-    """
-    Locate the ServiceNow incidents CSV.
-
-    Order of precedence:
-        1. SERVICENOW_CSV env var (explicit path).
-        2. ./data/servicenow/incidents.csv   (inside the container image, /app/data).
-        3. ../data/servicenow/incidents.csv  (running locally from mcp-server/).
-    """
-    env = os.environ.get("SERVICENOW_CSV")
-    if env:
-        return Path(env)
-
-    here = Path(__file__).resolve().parent
-    candidates = [
-        here / "data" / "servicenow" / "incidents.csv",
-        here.parent / "data" / "servicenow" / "incidents.csv",
-    ]
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    # Fall back to the container path; error is raised on read if truly missing.
-    return candidates[0]
-
-
 _incidents_cache: list[dict] | None = None
 
 
 def _load_incidents() -> list[dict]:
-    """Load and cache incident rows from the CSV (read once per process)."""
+    """
+    Load and cache incident rows (read once per process). Source is the GCS object
+    SERVICENOW_OBJECT when GCS_BUCKET is set, else the bundled data/ CSV.
+    """
     global _incidents_cache
     if _incidents_cache is None:
-        path = _resolve_incidents_csv()
-        with open(path, newline="", encoding="utf-8") as f:
-            _incidents_cache = list(csv.DictReader(f))
+        text = _read_data_text(SERVICENOW_OBJECT, "servicenow", "incidents.csv")
+        _incidents_cache = list(csv.DictReader(io.StringIO(text)))
     return _incidents_cache
 
 
@@ -163,6 +184,202 @@ def search_incidents(field: str, query: str) -> str:
 
     return json.dumps(
         {"field": field, "query": query, "count": len(matches), "incidents": matches},
+        indent=2,
+    )
+
+
+# ── Tools: workflow log search (CGP pipeline + nginx proxy) ──────────────────────
+# Both logs live under data/log/ and are bundled into the image at /app/data/log.
+def _resolve_data_file(*relparts: str) -> Path:
+    """
+    Locate a bundled data file (e.g. log/CGP.log).
+
+    Order of precedence:
+        1. DATA_DIR env var (explicit data root).
+        2. ./data/...   (inside the container image, /app/data).
+        3. ../data/...  (running locally from mcp-server/).
+    """
+    here = Path(__file__).resolve().parent
+    roots = []
+    if os.environ.get("DATA_DIR"):
+        roots.append(Path(os.environ["DATA_DIR"]))
+    roots += [here / "data", here.parent / "data"]
+    for root in roots:
+        candidate = root.joinpath(*relparts)
+        if candidate.exists():
+            return candidate
+    return roots[0].joinpath(*relparts)  # fall back; read raises if truly missing
+
+
+_log_cache: dict[str, list[str]] = {}
+
+
+def _load_log(object_path: str, *local_relparts: str) -> list[str]:
+    """
+    Load and cache the lines of a log file (read once per process). Source is the
+    GCS object `object_path` when GCS_BUCKET is set, else the bundled data/ file.
+    """
+    if object_path not in _log_cache:
+        text = _read_data_text(object_path, *local_relparts)
+        _log_cache[object_path] = text.splitlines()
+    return _log_cache[object_path]
+
+
+# CGP line: "2026-06-25 11:02:18 ERROR [DNA-Align] <message>"
+_CGP_LINE_RE = re.compile(
+    r"^(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+"
+    r"(?P<level>[A-Z]+)\s+\[(?P<stage>[^\]]+)\]\s+(?P<message>.*)$"
+)
+
+
+@mcp.tool(name="cgp_log_search")
+def cgp_log_search(
+    run_id: str | None = None,
+    sample_id: str | None = None,
+    log_type: str | None = None,
+    limit: int = 100,
+) -> str:
+    """
+    Search the CGP genomics pipeline log (data/log/CGP.log) to troubleshoot an
+    analysis task. Filters are AND-combined; omit a filter to ignore it.
+
+    Args:
+        run_id:    Illumina run ID (substring), e.g. '250625_NB551234_0142_AHKVJ7BGXM'.
+        sample_id: Sample/library ID (substring), e.g. 'CGP-0019'.
+        log_type:  Log level: INFO, WARN, or ERROR (case-insensitive).
+        limit:     Max matching records to return (default 100).
+
+    Returns JSON with the matching log records, each parsed into timestamp, level,
+    stage, and message (plus the raw line and 1-based line number).
+    """
+    lines = _load_log(CGP_LOG_OBJECT, "log", "CGP.log")
+    rid = (run_id or "").lower()
+    sid = (sample_id or "").lower()
+    lvl = (log_type or "").strip().upper()
+
+    matches = []
+    for n, line in enumerate(lines, start=1):
+        low = line.lower()
+        if rid and rid not in low:
+            continue
+        if sid and sid not in low:
+            continue
+        m = _CGP_LINE_RE.match(line)
+        level = m.group("level") if m else None
+        if lvl and (level or "").upper() != lvl:
+            continue
+        matches.append(
+            {
+                "line": n,
+                "timestamp": m.group("ts") if m else None,
+                "level": level,
+                "stage": m.group("stage") if m else None,
+                "message": m.group("message") if m else line,
+                "raw": line,
+            }
+        )
+        if len(matches) >= limit:
+            break
+
+    return json.dumps(
+        {
+            "log": "data/log/CGP.log",
+            "filters": {"run_id": run_id, "sample_id": sample_id, "log_type": log_type},
+            "count": len(matches),
+            "records": matches,
+        },
+        indent=2,
+    )
+
+
+# nginx access line: '<ip> - - [ts] "METHOD PATH HTTP/1.1" STATUS ...'
+_NGINX_ACCESS_RE = re.compile(
+    r'^(?P<ip>\S+) \S+ \S+ \[(?P<ts>[^\]]+)\] '
+    r'"(?P<method>[A-Z]+) (?P<path>\S+)[^"]*" (?P<status>\d{3})\b'
+)
+# nginx error line: '2026/06/26 04:00:16 [error] 2471#0: <message>'
+_NGINX_ERROR_RE = re.compile(
+    r"^(?P<ts>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}) \[(?P<level>\w+)\] (?P<message>.*)$"
+)
+
+
+@mcp.tool(name="nginx_log_search")
+def nginx_log_search(
+    run_id: str | None = None,
+    status: str | None = None,
+    keyword: str | None = None,
+    limit: int = 100,
+) -> str:
+    """
+    Search the nginx reverse-proxy log (data/log/nginx.log) that sits between the
+    CGP pipeline and the reporting tool. Contains both access and error entries.
+    Filters are AND-combined; omit a filter to ignore it.
+
+    Args:
+        run_id:  Illumina run ID (substring); matches the runId= query parameter.
+        status:  HTTP status code, e.g. '502' or '404' (applies to access entries).
+        keyword: Free-text substring, e.g. 'timed out', 'connection refused', 'auth'.
+        limit:   Max matching entries to return (default 100).
+
+    Returns JSON with matching entries, each classified as 'access' or 'error' and
+    parsed (method/path/status for access; level/message for error), plus the raw
+    line and 1-based line number.
+    """
+    lines = _load_log(NGINX_LOG_OBJECT, "log", "nginx.log")
+    rid = (run_id or "").lower()
+    want_status = (status or "").strip()
+    kw = (keyword or "").lower()
+
+    matches = []
+    for n, line in enumerate(lines, start=1):
+        low = line.lower()
+        if rid and rid not in low:
+            continue
+        if kw and kw not in low:
+            continue
+
+        access = _NGINX_ACCESS_RE.match(line)
+        error = None if access else _NGINX_ERROR_RE.match(line)
+
+        if want_status:
+            # Status only applies to access entries; drop everything else.
+            if not access or access.group("status") != want_status:
+                continue
+
+        if access:
+            entry = {
+                "line": n,
+                "type": "access",
+                "client_ip": access.group("ip"),
+                "timestamp": access.group("ts"),
+                "method": access.group("method"),
+                "path": access.group("path"),
+                "status": access.group("status"),
+                "raw": line,
+            }
+        elif error:
+            entry = {
+                "line": n,
+                "type": "error",
+                "timestamp": error.group("ts"),
+                "level": error.group("level"),
+                "message": error.group("message"),
+                "raw": line,
+            }
+        else:
+            entry = {"line": n, "type": "other", "raw": line}
+
+        matches.append(entry)
+        if len(matches) >= limit:
+            break
+
+    return json.dumps(
+        {
+            "log": "data/log/nginx.log",
+            "filters": {"run_id": run_id, "status": status, "keyword": keyword},
+            "count": len(matches),
+            "entries": matches,
+        },
         indent=2,
     )
 

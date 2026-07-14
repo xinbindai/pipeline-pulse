@@ -3,3 +3,5 @@ uvicorn[standard]>=0.30.0
 yfinance>=0.2.40
 # rag_search tool → Chroma client. Keep in sync with chroma/requirements*.txt.
 chromadb==0.6.3
+# GCS-backed data loading (servicenow/CGP/nginx) + gcs_upload.py. Uses ADC.
+google-cloud-storage>=2.10

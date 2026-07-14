@@ -11,3 +11,9 @@ chroma.log
 
 # Windows "mark of the web" sidecar files
 *:Zone.Identifier
+
+# Local scratch / test notes
+test_*
+
+# Local deploy config (keep the .example templates)
+deploy/*.env
