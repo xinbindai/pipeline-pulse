@@ -16,10 +16,19 @@ layout:
     log/CGP.log
     log/nginx.log
 
+The bucket defaults to <project>-mcp-data (matching deploy/deploy-mcp.sh); override
+with --bucket or GCS_BUCKET.
+
 Examples
 --------
-# Upload the default set from ./data (or ../data) to the bucket
+# Upload the default set from ./data (or ../data); bucket = <project>-mcp-data
+python mcp-server/gcs_upload.py
+
+# Explicit bucket via env
 GCS_BUCKET=my-bucket python mcp-server/gcs_upload.py
+
+# Create the bucket (if missing) then upload, in one step
+python mcp-server/gcs_upload.py --create --location us-central1
 
 # Explicit bucket + data dir
 python mcp-server/gcs_upload.py --bucket my-bucket --data-dir data
@@ -58,7 +67,8 @@ def resolve_data_dir(explicit: str | None) -> Path:
 def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser(description="Upload MCP data files to GCS (ADC auth).")
     ap.add_argument("--bucket", default=os.environ.get("GCS_BUCKET"),
-                    help="Target GCS bucket (or $GCS_BUCKET).")
+                    help="Target GCS bucket (or $GCS_BUCKET; "
+                         "default: <project>-mcp-data).")
     ap.add_argument("--project", default=os.environ.get("GOOGLE_CLOUD_PROJECT"),
                     help="GCP project (optional; defaults from ADC).")
     ap.add_argument("--data-dir", default=None,
@@ -68,14 +78,31 @@ def parse_args() -> argparse.Namespace:
                          "<data-dir>/<PATH>. Defaults to the standard three objects.")
     ap.add_argument("--file", nargs=2, action="append", metavar=("LOCAL", "OBJECT"),
                     help="Upload a specific local file to an object path (repeatable).")
+    ap.add_argument("--create", action="store_true",
+                    help="Create the bucket first if it does not exist "
+                         "(uniform bucket-level access).")
+    ap.add_argument("--location", default=os.environ.get("REGION", "us-central1"),
+                    help="Location for --create, e.g. us-central1 or US "
+                         "(default: $REGION or us-central1).")
     ap.add_argument("--dry-run", action="store_true", help="Print actions only.")
     return ap.parse_args()
 
 
+def ensure_bucket(client, bucket_name: str, location: str, dry_run: bool):
+    """Return the bucket, creating it (uniform access) if it does not exist."""
+    bucket = client.bucket(bucket_name)
+    if bucket.exists():
+        return bucket
+    if dry_run:
+        print(f"DRY  create bucket gs://{bucket_name} (location={location})")
+        return bucket
+    print(f"Creating bucket gs://{bucket_name} (location={location})...")
+    bucket.iam_configuration.uniform_bucket_level_access_enabled = True
+    return client.create_bucket(bucket, location=location)
+
+
 def main() -> int:
     args = parse_args()
-    if not args.bucket:
-        raise SystemExit("ERROR: set --bucket or the GCS_BUCKET env var.")
 
     # Build the (local_path, object_path) upload list.
     uploads: list[tuple[Path, str]] = []
@@ -87,22 +114,34 @@ def main() -> int:
             uploads.append((data_dir / obj, obj))
 
     client = storage.Client(project=args.project) if args.project else storage.Client()
-    bucket = client.bucket(args.bucket)
+
+    # Default the bucket to <project>-mcp-data (matching deploy/deploy-mcp.sh).
+    bucket_name = args.bucket or (f"{client.project}-mcp-data" if client.project else None)
+    if not bucket_name:
+        raise SystemExit(
+            "ERROR: no bucket. Set --bucket / GCS_BUCKET, or configure a default "
+            "project (GOOGLE_CLOUD_PROJECT or `gcloud config set project`) so the "
+            "default <project>-mcp-data can be derived."
+        )
+    if args.create:
+        bucket = ensure_bucket(client, bucket_name, args.location, args.dry_run)
+    else:
+        bucket = client.bucket(bucket_name)
 
     failures = 0
     for local_path, object_path in uploads:
         if not local_path.is_file():
-            print(f"SKIP  {local_path} -> gs://{args.bucket}/{object_path} (missing)", file=sys.stderr)
+            print(f"SKIP  {local_path} -> gs://{bucket_name}/{object_path} (missing)", file=sys.stderr)
             failures += 1
             continue
-        print(f"{'DRY  ' if args.dry_run else 'PUT  '}{local_path} -> gs://{args.bucket}/{object_path}")
+        print(f"{'DRY  ' if args.dry_run else 'PUT  '}{local_path} -> gs://{bucket_name}/{object_path}")
         if not args.dry_run:
             bucket.blob(object_path).upload_from_filename(str(local_path))
 
     if failures:
         print(f"\nCompleted with {failures} skipped/missing file(s).", file=sys.stderr)
         return 1
-    print(f"\nUploaded {len(uploads)} file(s) to gs://{args.bucket}.")
+    print(f"\nUploaded {len(uploads)} file(s) to gs://{bucket_name}.")
     return 0
 
 

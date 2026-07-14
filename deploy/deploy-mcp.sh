@@ -16,12 +16,12 @@
 #   AR_REPO      Artifact Registry repo    (default: mcp)
 #   TAG          Image tag                 (default: current git short SHA, else "latest")
 #   ALLOW_UNAUTH Allow unauthenticated     (default: true)
-#   GCS_BUCKET   Bucket for tool data       (optional; when set, servicenow/CGP/nginx
-#                                            tools read from GCS instead of bundled data/.
-#                                            Bucket is created and granted read access.)
+#   GCS_BUCKET   Bucket for tool data       (default: <project>-mcp-data; servicenow/CGP/
+#                                            nginx tools read from GCS. The bucket is
+#                                            created and granted read access on deploy.)
 #   SERVICE_ACCOUNT  Cloud Run runtime SA   (optional; defaults to the compute SA)
 #
-# When GCS_BUCKET is set, upload the data first with:
+# Upload the tool data to the bucket before the tools can serve it:
 #   GCS_BUCKET=<bucket> python mcp-server/gcs_upload.py
 #
 set -euo pipefail
@@ -64,7 +64,6 @@ SERVICE="${SERVICE:-bx-workflow-mcp}"
 AR_REPO="${AR_REPO:-mcp}"
 TAG="${TAG:-$(git rev-parse --short HEAD 2>/dev/null || echo latest)}"
 ALLOW_UNAUTH="${ALLOW_UNAUTH:-true}"
-GCS_BUCKET="${GCS_BUCKET:-}"
 SERVICE_ACCOUNT="${SERVICE_ACCOUNT:-}"
 
 if [[ -z "$PROJECT_ID" ]]; then
@@ -72,6 +71,9 @@ if [[ -z "$PROJECT_ID" ]]; then
   echo "       Run 'gcloud config set project <id>' or 'PROJECT_ID=<id> ./deploy/deploy-mcp.sh'." >&2
   exit 1
 fi
+
+# Tool-data bucket defaults to <project>-mcp-data (created/granted on deploy).
+GCS_BUCKET="${GCS_BUCKET:-${PROJECT_ID}-mcp-data}"
 
 IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${SERVICE}:${TAG}"
 
