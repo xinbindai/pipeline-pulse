@@ -4,10 +4,13 @@
 # Cloud Storage bucket (mounted via gcsfuse at /data) as the persistence layer.
 #
 # Usage (from anywhere in the repository):
-#   BUCKET=my-chroma-bucket ./deploy/deploy-chroma.sh
+#   cp deploy/deploy-chroma.env.example deploy/deploy-chroma.env   # then edit
+#   ./deploy/deploy-chroma.sh
 #
-# Configuration is via environment variables (defaults shown; PROJECT_ID falls
-# back to your active gcloud config, BUCKET defaults to <project>-chroma-data):
+# Configuration is loaded from deploy/deploy-chroma.env (override the path with
+# ENV_FILE=...), then from environment variables (which take precedence). Defaults
+# shown; PROJECT_ID falls back to your active gcloud config, BUCKET defaults to
+# <project>-chroma-data:
 #   PROJECT_ID   GCP project id            (default: `gcloud config get-value project`)
 #   REGION       Cloud Run / AR region     (default: us-central1)
 #   SERVICE      Cloud Run service name    (default: chroma-server)
@@ -21,10 +24,36 @@
 # support concurrent writers safely, so this deploys with --max-instances=1.
 set -euo pipefail
 
+# Load KEY=value pairs from a config file. Lines may use an optional `export`
+# prefix and quoted values; blank/`#` lines are ignored. Variables already set in
+# the environment take precedence, so you can still override inline.
+load_env_file() {
+  local file="$1" line key val
+  [[ -f "$file" ]] || return 0
+  echo "Loading config from ${file}"
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%$'\r'}"
+    [[ "$line" =~ ^[[:space:]]*(#|$) ]] && continue
+    line="${line#export }"
+    key="${line%%=*}"; val="${line#*=}"
+    key="${key//[[:space:]]/}"
+    val="${val#"${val%%[![:space:]]*}"}"; val="${val%"${val##*[![:space:]]}"}"
+    [[ "$val" == \"*\" ]] && val="${val:1:${#val}-2}"
+    [[ "$val" == \'*\' ]] && val="${val:1:${#val}-2}"
+    [[ -z "$key" ]] && continue
+    [[ -n "${!key:-}" ]] || export "$key=$val"
+  done < "$file"
+}
+
 # This script lives in deploy/; the repo root is its parent.
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 CHROMA_DIR="${REPO_ROOT}/chroma"
 cd "$REPO_ROOT"
+
+# Load deploy config (deploy/deploy-chroma.env by default; override via ENV_FILE).
+ENV_FILE="${ENV_FILE:-${SCRIPT_DIR}/deploy-chroma.env}"
+load_env_file "$ENV_FILE"
 
 # ── Configuration ───────────────────────────────────────────────────────────────
 PROJECT_ID="${PROJECT_ID:-$(gcloud config get-value project 2>/dev/null || true)}"

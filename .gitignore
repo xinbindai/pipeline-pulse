@@ -14,3 +14,6 @@ chroma.log
 
 # Local scratch / test notes
 test_*
+
+# Local deploy config (keep the .example templates)
+deploy/*.env

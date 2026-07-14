@@ -7,11 +7,18 @@ FastMCP Demo Server
 - Tool     : nginx_log_search(run_id, status, ...)    → search the nginx proxy log
 - Tool     : rag_search(query, collection, n)         → retrieve chunks from Chroma
 - Tool     : calculate(a, op, b)                       → performs basic arithmetic
+
+The ServiceNow incidents and the CGP/nginx logs are loaded from a Google Cloud
+Storage bucket when GCS_BUCKET is set (Cloud Run uses its service account; local
+development uses Application Default Credentials). They fall back to the bundled
+data/ files when GCS is not configured. Use gcs_upload.py to populate the bucket.
+
 Runs as a Streamable HTTP server (stateless, works on Cloud Run).
 """
 
 import csv
 import datetime as dt
+import io
 import json
 import os
 import re
@@ -24,6 +31,40 @@ mcp = FastMCP(
     name="demo-server",
     instructions="A simple demo MCP server running on Google Cloud Run.",
 )
+
+
+# ── Data source: Google Cloud Storage (with local fallback) ──────────────────────
+# When GCS_BUCKET is set, the ServiceNow incidents CSV and the CGP/nginx logs are
+# read from that bucket via Application Default Credentials — the Cloud Run service
+# account in production, or `gcloud auth application-default login` locally. Object
+# paths default to the repo's data/ layout and are overridable via env.
+GCS_BUCKET = os.environ.get("GCS_BUCKET")
+SERVICENOW_OBJECT = os.environ.get("SERVICENOW_OBJECT", "servicenow/incidents.csv")
+CGP_LOG_OBJECT = os.environ.get("CGP_LOG_OBJECT", "log/CGP.log")
+NGINX_LOG_OBJECT = os.environ.get("NGINX_LOG_OBJECT", "log/nginx.log")
+
+
+def _gcs_download_text(object_path: str) -> str | None:
+    """Download a GCS object as text via ADC, or None when GCS is not configured."""
+    if not GCS_BUCKET:
+        return None
+    from google.cloud import storage  # lazy import; only needed when GCS is used
+
+    client = storage.Client()  # Application Default Credentials
+    blob = client.bucket(GCS_BUCKET).blob(object_path)
+    return blob.download_as_text()
+
+
+def _read_data_text(object_path: str, *local_relparts: str) -> str:
+    """
+    Return the text of a data file, preferring GCS (when GCS_BUCKET is set) and
+    falling back to the bundled local file under data/ for dev/tests.
+    """
+    text = _gcs_download_text(object_path)
+    if text is not None:
+        return text
+    path = _resolve_data_file(*local_relparts)
+    return Path(path).read_text(encoding="utf-8", errors="replace")
 
 
 # ── Tool: stock price via Yahoo Finance ─────────────────────────────────────────
@@ -78,41 +119,18 @@ SN_FIELDS = (
 )
 
 
-def _resolve_incidents_csv() -> Path:
-    """
-    Locate the ServiceNow incidents CSV.
-
-    Order of precedence:
-        1. SERVICENOW_CSV env var (explicit path).
-        2. ./data/servicenow/incidents.csv   (inside the container image, /app/data).
-        3. ../data/servicenow/incidents.csv  (running locally from mcp-server/).
-    """
-    env = os.environ.get("SERVICENOW_CSV")
-    if env:
-        return Path(env)
-
-    here = Path(__file__).resolve().parent
-    candidates = [
-        here / "data" / "servicenow" / "incidents.csv",
-        here.parent / "data" / "servicenow" / "incidents.csv",
-    ]
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    # Fall back to the container path; error is raised on read if truly missing.
-    return candidates[0]
-
-
 _incidents_cache: list[dict] | None = None
 
 
 def _load_incidents() -> list[dict]:
-    """Load and cache incident rows from the CSV (read once per process)."""
+    """
+    Load and cache incident rows (read once per process). Source is the GCS object
+    SERVICENOW_OBJECT when GCS_BUCKET is set, else the bundled data/ CSV.
+    """
     global _incidents_cache
     if _incidents_cache is None:
-        path = _resolve_incidents_csv()
-        with open(path, newline="", encoding="utf-8") as f:
-            _incidents_cache = list(csv.DictReader(f))
+        text = _read_data_text(SERVICENOW_OBJECT, "servicenow", "incidents.csv")
+        _incidents_cache = list(csv.DictReader(io.StringIO(text)))
     return _incidents_cache
 
 
@@ -196,14 +214,15 @@ def _resolve_data_file(*relparts: str) -> Path:
 _log_cache: dict[str, list[str]] = {}
 
 
-def _load_log(*relparts: str) -> list[str]:
-    """Load and cache the lines of a bundled log file (read once per process)."""
-    key = "/".join(relparts)
-    if key not in _log_cache:
-        path = _resolve_data_file(*relparts)
-        with open(path, encoding="utf-8", errors="replace") as f:
-            _log_cache[key] = f.read().splitlines()
-    return _log_cache[key]
+def _load_log(object_path: str, *local_relparts: str) -> list[str]:
+    """
+    Load and cache the lines of a log file (read once per process). Source is the
+    GCS object `object_path` when GCS_BUCKET is set, else the bundled data/ file.
+    """
+    if object_path not in _log_cache:
+        text = _read_data_text(object_path, *local_relparts)
+        _log_cache[object_path] = text.splitlines()
+    return _log_cache[object_path]
 
 
 # CGP line: "2026-06-25 11:02:18 ERROR [DNA-Align] <message>"
@@ -233,7 +252,7 @@ def cgp_log_search(
     Returns JSON with the matching log records, each parsed into timestamp, level,
     stage, and message (plus the raw line and 1-based line number).
     """
-    lines = _load_log("log", "CGP.log")
+    lines = _load_log(CGP_LOG_OBJECT, "log", "CGP.log")
     rid = (run_id or "").lower()
     sid = (sample_id or "").lower()
     lvl = (log_type or "").strip().upper()
@@ -306,7 +325,7 @@ def nginx_log_search(
     parsed (method/path/status for access; level/message for error), plus the raw
     line and 1-based line number.
     """
-    lines = _load_log("log", "nginx.log")
+    lines = _load_log(NGINX_LOG_OBJECT, "log", "nginx.log")
     rid = (run_id or "").lower()
     want_status = (status or "").strip()
     kw = (keyword or "").lower()
