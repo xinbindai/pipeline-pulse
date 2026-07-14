@@ -41,14 +41,14 @@
 2026-06-25 18:50:33 INFO  [CGP] Sequencing started, run id 260709_A01200_AHKJKGGJHD. Sample ID from sample sheet: sample_2026_0076 sample_2026_0077 sample_2026_0078 sample_2026_0079
 2026-06-25 19:05:33 INFO  [CGP] Sequencing successfully completed for 260709_A01200_AHKJKGGJHD
 2026-06-25 19:05:34 INFO  [CGP] Analysis task started for 260709_A01200_AHKJKGGJHD, Task ID = 2026-06-25_19-05-34_260709_A01200_AHKJKGGJHD
-2026-06-25 19:05:34 INFO  [CGP] Analysis task (ID = 2026-06-25_19-05-34_260709_A01200_AHKJKGGJHD) failed due to limited disk space on /scratch, 0 bytes free. Task will be requeued after space is reclaimed.
+2026-06-25 19:05:34 ERROR  [CGP] Analysis task (ID = 2026-06-25_19-05-34_260709_A01200_AHKJKGGJHD) completed. Checking run level QC. PCT_PF_READS = 40. Lower than cutoff. Check sample prepraration.
 2026-06-25 19:20:48 INFO  [Metrics] Combined variant output and metrics written to /mnt/results/250625_NB551234_0142_AHKVJ7BGXM
 2026-06-25 19:30:00 INFO  [CGP] Analysis task completed for run 250625_NB551234_0142_AHKVJ7BGXM, 23/24 DNA + 8/8 RNA libraries successful
 2026-06-25 19:30:02 INFO  [Report] Posting analysis result to reporting tool via nginx: POST https://cgp-proxy.internal/api/v1/results?runId=250625_NB551234_0142_AHKVJ7BGXM
 2026-06-25 19:30:04 INFO  [Report] Reporting tool acknowledged result for run 250625_NB551234_0142_AHKVJ7BGXM: HTTP 200, reportId=RPT-44021
 2026-06-25 19:30:05 INFO  [CGP] Archiving run 250625_NB551234_0142_AHKVJ7BGXM to cold storage, task closed (runtime 11h30m)
-2026-06-25 20:16:11 INFO  [CGP] Sending report for sample_2026_0050 to downstream service, task UUID= 2026-06-25_20-16-11_260709_A01200_AHKJKGGJHD
-2026-06-25 20:16:40 ERROR [CGP] Task 2026-06-25_20-16-11_260709_A01200_AHKJKGGJHD failed, status code from downstream service: 400. Need retry
+2026-06-25 20:16:11 INFO  [CGP] Sending report for sample_2026_0050 to downstream service, task ID=2026-06-25_20-16-11
+2026-06-25 20:16:40 ERROR [CGP] Task 2026-06-25_20-16-11 failed, status code from downstream service: 400. Need retry
 2026-06-25 22:30:01 INFO  [Watcher] copyComplete.txt detected for run 250625_M02158_0311_000000000-KLXYZ
 2026-06-25 22:30:03 INFO  [CGP] Launching CGP analysis task for run 250625_M02158_0311_000000000-KLXYZ
 2026-06-25 22:30:05 ERROR [FASTQ] DRAGEN BCL Convert failed for run 250625_M02158_0311_000000000-KLXYZ: RunInfo.xml not found, run folder may be incomplete
