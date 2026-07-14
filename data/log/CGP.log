@@ -37,18 +37,24 @@
 2026-06-25 17:12:09 ERROR [CGP] Stage annotation failed for run 250625_NB551234_0142_AHKVJ7BGXM, sample CGP-0019 quarantined for manual review
 2026-06-25 18:00:14 INFO  [CGP] Increasing JVM heap allocation to 32GB and requeueing CGP-0019
 2026-06-25 18:45:27 INFO  [Annot] Nirvana annotation completed for CGP-0019 on retry, 287 variants annotated
-2026-06-25 19:05:33 INFO  [Contam] Contamination check passed for run 250625_NB551234_0142_AHKVJ7BGXM, max score 0.03 (p=0.41)
+2026-06-25 18:46:33 INFO  [Contam] Contamination check passed for run 250625_NB551234_0142_AHKVJ7BGXM, max score 0.03 (p=0.41)
+2026-06-25 18:50:33 INFO  [CGP] Sequencing started, run id 260709_A01200_AHKJKGGJHD. Sample ID from sample sheet: sample_2026_0076 sample_2026_0077 sample_2026_0078 sample_2026_0079
+2026-06-25 19:05:33 INFO  [CGP] Sequencing successfully completed for 260709_A01200_AHKJKGGJHD
+2026-06-25 19:05:34 INFO  [CGP] Analysis task started for 260709_A01200_AHKJKGGJHD, Task ID = 2026-06-25_19-05-34_260709_A01200_AHKJKGGJHD
+2026-06-25 19:05:34 INFO  [CGP] Analysis task (ID = 2026-06-25_19-05-34_260709_A01200_AHKJKGGJHD) failed due to limited disk space on /scratch, 0 bytes free. Task will be requeued after space is reclaimed.
 2026-06-25 19:20:48 INFO  [Metrics] Combined variant output and metrics written to /mnt/results/250625_NB551234_0142_AHKVJ7BGXM
 2026-06-25 19:30:00 INFO  [CGP] Analysis task completed for run 250625_NB551234_0142_AHKVJ7BGXM, 23/24 DNA + 8/8 RNA libraries successful
 2026-06-25 19:30:02 INFO  [Report] Posting analysis result to reporting tool via nginx: POST https://cgp-proxy.internal/api/v1/results?runId=250625_NB551234_0142_AHKVJ7BGXM
 2026-06-25 19:30:04 INFO  [Report] Reporting tool acknowledged result for run 250625_NB551234_0142_AHKVJ7BGXM: HTTP 200, reportId=RPT-44021
 2026-06-25 19:30:05 INFO  [CGP] Archiving run 250625_NB551234_0142_AHKVJ7BGXM to cold storage, task closed (runtime 11h30m)
-2026-06-25 12:30:01 INFO  [Watcher] copyComplete.txt detected for run 250625_M02158_0311_000000000-KLXYZ
-2026-06-25 12:30:03 INFO  [CGP] Launching CGP analysis task for run 250625_M02158_0311_000000000-KLXYZ
-2026-06-25 12:30:05 ERROR [FASTQ] DRAGEN BCL Convert failed for run 250625_M02158_0311_000000000-KLXYZ: RunInfo.xml not found, run folder may be incomplete
-2026-06-25 12:30:06 ERROR [CGP] Aborting analysis task for run 250625_M02158_0311_000000000-KLXYZ, missing required run metadata
-2026-06-25 12:31:20 WARN  [Watcher] copyComplete.txt present but RunInfo.xml/RTAComplete.txt absent on NFS for run 250625_M02158_0311_000000000-KLXYZ
-2026-06-25 12:45:19 INFO  [CGP] Notified lab operator to re-stage run 250625_M02158_0311_000000000-KLXYZ on NFS share
+2026-06-25 20:16:11 INFO  [CGP] Sending report for sample_2026_0050 to downstream service, task UUID= 2026-06-25_20-16-11_260709_A01200_AHKJKGGJHD
+2026-06-25 20:16:40 ERROR [CGP] Task 2026-06-25_20-16-11_260709_A01200_AHKJKGGJHD failed, status code from downstream service: 400. Need retry
+2026-06-25 22:30:01 INFO  [Watcher] copyComplete.txt detected for run 250625_M02158_0311_000000000-KLXYZ
+2026-06-25 22:30:03 INFO  [CGP] Launching CGP analysis task for run 250625_M02158_0311_000000000-KLXYZ
+2026-06-25 22:30:05 ERROR [FASTQ] DRAGEN BCL Convert failed for run 250625_M02158_0311_000000000-KLXYZ: RunInfo.xml not found, run folder may be incomplete
+2026-06-25 22:30:06 ERROR [CGP] Aborting analysis task for run 250625_M02158_0311_000000000-KLXYZ, missing required run metadata
+2026-06-25 22:31:20 WARN  [Watcher] copyComplete.txt present but RunInfo.xml/RTAComplete.txt absent on NFS for run 250625_M02158_0311_000000000-KLXYZ
+2026-06-25 22:45:19 INFO  [CGP] Notified lab operator to re-stage run 250625_M02158_0311_000000000-KLXYZ on NFS share
 2026-06-26 07:30:02 INFO  [CGP] DRAGEN TruSight Oncology 500 (CGP) Analysis Software v2.5.0 starting up
 2026-06-26 07:30:05 INFO  [Watcher] copyComplete.txt detected for run 250626_A00521_0205_BHF7LMDSXY
 2026-06-26 07:30:07 INFO  [CGP] Launching CGP analysis task for run 250626_A00521_0205_BHF7LMDSXY (88 DNA + 8 RNA FFPE libraries)
