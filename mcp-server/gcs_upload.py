@@ -44,8 +44,6 @@ import os
 import sys
 from pathlib import Path
 
-from google.cloud import storage
-
 DEFAULT_OBJECTS = [
     "servicenow/incidents.csv",
     "log/CGP.log",
@@ -88,13 +86,20 @@ def parse_args() -> argparse.Namespace:
     return ap.parse_args()
 
 
-def ensure_bucket(client, bucket_name: str, location: str, dry_run: bool):
+def make_client(project: str | None):
+    """
+    Build a GCS client from ADC. Imported lazily so --dry-run works without the
+    google-cloud-storage package or credentials installed.
+    """
+    from google.cloud import storage
+
+    return storage.Client(project=project) if project else storage.Client()
+
+
+def ensure_bucket(client, bucket_name: str, location: str):
     """Return the bucket, creating it (uniform access) if it does not exist."""
     bucket = client.bucket(bucket_name)
     if bucket.exists():
-        return bucket
-    if dry_run:
-        print(f"DRY  create bucket gs://{bucket_name} (location={location})")
         return bucket
     print(f"Creating bucket gs://{bucket_name} (location={location})...")
     bucket.iam_configuration.uniform_bucket_level_access_enabled = True
@@ -113,20 +118,32 @@ def main() -> int:
         for obj in (args.objects or DEFAULT_OBJECTS):
             uploads.append((data_dir / obj, obj))
 
-    client = storage.Client(project=args.project) if args.project else storage.Client()
-
-    # Default the bucket to <project>-mcp-data (matching deploy/deploy-mcp.sh).
-    bucket_name = args.bucket or (f"{client.project}-mcp-data" if client.project else None)
+    # Deriving the default <project>-mcp-data needs ADC to resolve the project, so
+    # an explicit --bucket / GCS_BUCKET keeps --dry-run entirely offline.
+    client = None
+    bucket_name = args.bucket
+    if not bucket_name:
+        client = make_client(args.project)
+        bucket_name = f"{client.project}-mcp-data" if client.project else None
     if not bucket_name:
         raise SystemExit(
             "ERROR: no bucket. Set --bucket / GCS_BUCKET, or configure a default "
             "project (GOOGLE_CLOUD_PROJECT or `gcloud config set project`) so the "
             "default <project>-mcp-data can be derived."
         )
-    if args.create:
-        bucket = ensure_bucket(client, bucket_name, args.location, args.dry_run)
+
+    bucket = None
+    if args.dry_run:
+        # Whether the bucket already exists is unknowable without a round trip.
+        if args.create:
+            print(f"DRY  ensure bucket gs://{bucket_name} exists (location={args.location})")
     else:
-        bucket = client.bucket(bucket_name)
+        client = client or make_client(args.project)
+        bucket = (
+            ensure_bucket(client, bucket_name, args.location)
+            if args.create
+            else client.bucket(bucket_name)
+        )
 
     failures = 0
     for local_path, object_path in uploads:
@@ -141,7 +158,8 @@ def main() -> int:
     if failures:
         print(f"\nCompleted with {failures} skipped/missing file(s).", file=sys.stderr)
         return 1
-    print(f"\nUploaded {len(uploads)} file(s) to gs://{bucket_name}.")
+    verb = "Would upload" if args.dry_run else "Uploaded"
+    print(f"\n{verb} {len(uploads)} file(s) to gs://{bucket_name}.")
     return 0
 
 

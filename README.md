@@ -109,7 +109,7 @@ python mcp-server/gcs_upload.py --bucket my-mcp-data --create --location us-cent
 # Bucket via env instead of a flag (defaults to <project>-mcp-data).
 GCS_BUCKET=my-mcp-data python mcp-server/gcs_upload.py
 
-# See what would happen without writing anything.
+# See what would happen without writing anything (needs no credentials).
 GCS_BUCKET=my-mcp-data python mcp-server/gcs_upload.py --dry-run
 
 # Refresh just one object after editing a log.
