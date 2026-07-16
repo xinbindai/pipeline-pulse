@@ -87,6 +87,45 @@ python mcp-server/main.py          # http://localhost:8080/mcp  (PORT to overrid
 
 With no `GCS_BUCKET` set it reads the local `data/` folder — that's the quickest way to test.
 
+#### Pushing the tool data to Cloud Storage
+
+For a deployed server, the tickets and logs live in a GCS bucket.
+[gcs_upload.py](mcp-server/gcs_upload.py) pushes them there from the local `data/` folder,
+preserving the layout the tools expect:
+
+```
+servicenow/incidents.csv    ← data/servicenow/incidents.csv
+log/CGP.log                 ← data/log/CGP.log
+log/nginx.log               ← data/log/nginx.log
+```
+
+Authentication uses Application Default Credentials — `gcloud auth application-default
+login` locally, or a service account with `roles/storage.objectAdmin` in CI.
+
+```bash
+# Create the bucket if missing, then upload the three default objects.
+python mcp-server/gcs_upload.py --bucket my-mcp-data --create --location us-central1
+
+# Bucket via env instead of a flag (defaults to <project>-mcp-data).
+GCS_BUCKET=my-mcp-data python mcp-server/gcs_upload.py
+
+# See what would happen without writing anything.
+GCS_BUCKET=my-mcp-data python mcp-server/gcs_upload.py --dry-run
+
+# Refresh just one object after editing a log.
+python mcp-server/gcs_upload.py --bucket my-mcp-data --object log/CGP.log
+
+# Upload an arbitrary local file to an object path.
+python mcp-server/gcs_upload.py --bucket my-mcp-data --file ./out.csv servicenow/incidents.csv
+```
+
+`--create` is only needed when you upload before deploying: `deploy/deploy-mcp.sh` also
+creates the bucket and grants the Cloud Run service account read access. Re-running the
+upload overwrites the objects, so it doubles as the refresh command whenever the mockup
+data changes. The object paths above are the in-app defaults; override them with
+`SERVICENOW_OBJECT`, `CGP_LOG_OBJECT`, and `NGINX_LOG_OBJECT` on both the upload and the
+service if you want a different layout.
+
 ### `chroma/` — vector service and RAG ingest
 
 A Chroma server you can run in Docker locally or deploy to Cloud Run with a GCS bucket
